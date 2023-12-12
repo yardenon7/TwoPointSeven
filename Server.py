@@ -1,9 +1,8 @@
 """
 author: Yarden Hadas
-Date: 19/11
-Description: The server. Will return the time, random number between 1 and 10 and
-the name of the server, depending on what the client asked. Could also end and start a new connection with another
-client
+Date: 11/12
+Description: The server. The computer that the engineer ask data from. The engineer can ask for DIR, EXECUTE, DELETE, CO
+PY, TAKE SCREENSHOT, PHOTO SEND OR EXIT
 """
 import socket
 import logging
@@ -18,7 +17,11 @@ MAX_PACKET = 1024
 EXIT = "EXIT"
 LAST_MASSAGE = "done with the work"
 
+
 def send_request(request, client_socket):
+    """
+    :param request: the request the client want to ask the server. client_socket:
+    """
     cmd = request.split(' ')[0]
     if cmd == "DIR":
         protocol_length_request_or_respond(client_socket, ask_for_dir(request))
@@ -32,8 +35,8 @@ def send_request(request, client_socket):
         protocol_length_request_or_respond(client_socket, ask_for_take_screenshot(request))
     elif request == "PHOTO SEND":
         protocol_length_request_or_respond(client_socket, ask_for_photo_send(request))
-    elif request == "EXIT":
-        protocol_length_request_or_respond(client_socket, request)
+    else:
+        protocol_length_request_or_respond(client_socket, "invalid commands")
 
 
 def main():
@@ -45,15 +48,18 @@ def main():
             client_socket, client_address = socketi.accept()
             try:
                 request = protocol_decryption_request(client_socket)
+                logging.debug("the request was: " + request)
                 while request != EXIT:
                     send_request(request, client_socket)
-                    #protocol_length_request_or_respond(client_socket, request)
+                    # protocol_length_request_or_respond(client_socket, request)
                     request = protocol_decryption_request(client_socket)
+                    logging.debug("the request was: " + request)
             except socket.error as err:
                 print('received socket error on client socket' + str(err))
             finally:
                 protocol_length_request_or_respond(client_socket, LAST_MASSAGE)
                 client_socket.close()
+                logging.debug("the server has done connecting with the client")
     except socket.error as err:
         print('received socket error on server socket' + str(err))
     finally:
@@ -64,8 +70,12 @@ def main():
 
 if __name__ == '__main__':
     """
-     checking
-     """
+    checking
+    """
+    assert ask_for_dir("DIR something") == "the folder you asked for doesn't exist in this computer"
+    assert ask_for_remove("DELETE something") == "the file doesn't exist"
+    assert ask_for_copy("COPY something") == "the file wasn't copied successfully"
+    assert ask_for_execute("EXECUTE some") == "the software wasn't opened successfully"
+    assert ask_for_take_screenshot("TAKE SCREENSHOT") == "the screenshot was taken successfully" or "the screenshot wasn't taken successfully"
+
     main()
-
-
